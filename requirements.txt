@@ -5,3 +5,5 @@ passlib
 python-multipart
 bcrypt
 psycopg2-binary
+pytest
+httpx

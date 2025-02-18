@@ -13,7 +13,7 @@ app = FastAPI()
 # Teacher CRUD operations
 @app.post("/teachers/", response_model=schemas.Teacher)
 def create_teacher(teacher: schemas.TeacherCreate, db: Session = Depends(get_db)):
-    db_teacher = models.Teacher(**teacher.dict())
+    db_teacher = models.Teacher(**teacher.model_dump())
     db.add(db_teacher)
     db.commit()
     db.refresh(db_teacher)
@@ -37,7 +37,7 @@ def update_teacher(teacher_id: int, teacher: schemas.TeacherCreate, db: Session 
     if db_teacher is None:
         raise HTTPException(status_code=404, detail="Teacher not found")
     
-    for key, value in teacher.dict().items():
+    for key, value in teacher.model_dump().items():
         setattr(db_teacher, key, value)
     
     db.commit()
@@ -57,8 +57,9 @@ def delete_teacher(teacher_id: int, db: Session = Depends(get_db)):
 # Student CRUD operations
 @app.post("/students/", response_model=schemas.Student)
 def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
-    hashed_password = models.pwd_context.hash(student.password)
-    db_student = models.Student(**student.dict(exclude={'password'}), password=hashed_password)
+    # In your student creation endpoint
+    hashed_password = models.Student.hash_password(student.password)
+    db_student = models.Student(**student.model_dump(exclude={'password'}), password=hashed_password)
     db.add(db_student)
     db.commit()
     db.refresh(db_student)
@@ -76,15 +77,23 @@ def read_student(student_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Student not found")
     return student
 
+# main.py
 @app.put("/students/{student_id}", response_model=schemas.Student)
 def update_student(student_id: int, student: schemas.StudentCreate, db: Session = Depends(get_db)):
     db_student = db.query(models.Student).filter(models.Student.id == student_id).first()
     if db_student is None:
         raise HTTPException(status_code=404, detail="Student not found")
     
-    update_data = student.dict(exclude={'password'})
+    # Check if email is being changed to an existing one
+    if student.email != db_student.email:
+        existing = db.query(models.Student).filter(models.Student.email == student.email).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+    
+    update_data = student.model_dump(exclude={'password'}, exclude_unset=True)
+    
     if student.password:
-        update_data['password'] = models.pwd_context.hash(student.password)
+        update_data['password'] = models.Student.hash_password(student.password)
     
     for key, value in update_data.items():
         setattr(db_student, key, value)
