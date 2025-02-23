@@ -1,9 +1,11 @@
 fastapi
 uvicorn
 sqlalchemy
-passlib
+passlib==1.7.4
 python-multipart
-bcrypt
+bcrypt==4.0.1
 psycopg2-binary
 pytest
 httpx
+python-jose[cryptography]
+python-dotenv
