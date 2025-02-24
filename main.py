@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from database import engine, get_db
 import models
 import schemas
+import json
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,6 +34,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ==================== ЭТО ====================================
+@app.get("/tests/a1")
+def show_test_a1():
+    with open("tests/a1.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+            
+    return data
+
+@app.get("/")
+def home_page():
+    return {
+        "message": "Hello world!"
+    }
+# =============================================================
 
 # Аутентификация
 @app.post("/token")

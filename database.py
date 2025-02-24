@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 # Database credentials
 DB_USER = "postgres"
-DB_PASSWORD = "123456"
+DB_PASSWORD = "qwerty"
 DB_HOST = "localhost"
 DB_PORT = "5432"
 DB_NAME = "english_gang"
