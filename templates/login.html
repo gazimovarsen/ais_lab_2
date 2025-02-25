@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Login - English Gang</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
+
+<body>
+    <div class="login-form">
+        <h2>Login to English Gang</h2>
+        <div id="message" class="message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" id="loginBtn">Login</button>
+        </form>
+
+        <div class="links">
+            <div class="register-link">
+                Don't have an account? <a href="/registration.html">Register here</a>
+            </div>
+            <div class="back-link">
+                <a href="/">← Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('loginForm');
+            const messageDiv = document.getElementById('message');
+
+            // Проверяем, есть ли сообщение об успешной регистрации в URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const successMsg = urlParams.get('success');
+            if (successMsg) {
+                messageDiv.textContent = decodeURIComponent(successMsg);
+                messageDiv.className = 'message success';
+            }
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const loginBtn = document.getElementById('loginBtn');
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Logging in...';
+
+                try {
+                    // Создаем объект FormData для отправки формы
+                    const formData = new FormData();
+                    formData.append('username', document.getElementById('email').value);
+                    formData.append('password', document.getElementById('password').value);
+
+                    // Отправляем запрос на авторизацию
+                    const response = await fetch('/api/token', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || 'Login failed');
+                    }
+
+                    // Получаем данные о токене
+                    const data = await response.json();
+
+                    // Сохраняем токен в localStorage
+                    localStorage.setItem('token', data.access_token);
+
+                    // Показываем сообщение об успешном входе
+                    messageDiv.textContent = 'Login successful! Redirecting to dashboard...';
+                    messageDiv.className = 'message success';
+
+                    // Перенаправляем на дашборд
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+
+                } catch (error) {
+                    messageDiv.textContent = error.message;
+                    messageDiv.className = 'message error';
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Login';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Register - English Gang</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/registration.css">
+</head>
+
+<body>
+    <div class="register-form">
+        <h2>Register as Student</h2>
+        <div id="message" class="message"></div>
+
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="first_name">First Name:</label>
+                <input type="text" id="first_name" name="first_name" required>
+            </div>
+            <div class="form-group">
+                <label for="last_name">Last Name:</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="age">Age:</label>
+                <input type="number" id="age" name="age" required>
+            </div>
+            <div class="form-group">
+                <label for="sex">Sex:</label>
+                <select id="sex" name="sex" required>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="level">English Level:</label>
+                <select id="level" name="level" required>
+                    <option value="A1">A1</option>
+                    <option value="A2">A2</option>
+                    <option value="B1">B1</option>
+                    <option value="B2">B2</option>
+                    <option value="C1">C1</option>
+                    <option value="C2">C2</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" id="registerBtn">Register</button>
+        </form>
+
+        <div class="links">
+            <div class="login-link">
+                Already have an account? <a href="/login.html">Login here</a>
+            </div>
+            <div class="back-link">
+                <a href="/">← Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('registrationForm');
+            const messageDiv = document.getElementById('message');
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const registerBtn = document.getElementById('registerBtn');
+                registerBtn.disabled = true;
+                registerBtn.textContent = 'Registering...';
+
+                try {
+                    // Собираем данные формы
+                    const data = {
+                        first_name: document.getElementById('first_name').value,
+                        last_name: document.getElementById('last_name').value,
+                        email: document.getElementById('email').value,
+                        age: parseInt(document.getElementById('age').value),
+                        sex: document.getElementById('sex').value,
+                        level: document.getElementById('level').value,
+                        password: document.getElementById('password').value
+                    };
+
+                    // Отправляем запрос на регистрацию
+                    const response = await fetch('/api/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || 'Registration failed');
+                    }
+
+                    // Успешная регистрация
+                    messageDiv.textContent = 'Registration successful! Redirecting to login...';
+                    messageDiv.className = 'message success';
+
+                    // Перенаправляем на страницу логина через 2 секунды
+                    setTimeout(() => {
+                        window.location.href = '/login.html?success=' + encodeURIComponent('Registration successful! Please log in with your credentials.');
+                    }, 2000);
+
+                } catch (error) {
+                    messageDiv.textContent = error.message;
+                    messageDiv.className = 'message error';
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = 'Register';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

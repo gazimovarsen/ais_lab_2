@@ -1,0 +1,79 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Стили для карточек учителей */
+.teacher-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.teacher-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Стили для меню навигации */
+.nav-link {
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #4F46E5;
+}
+
+/* Анимация загрузки контента */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+/* Стили для сообщений об ошибках/успехе */
+.message {
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.message.error {
+    background-color: #FEE2E2;
+    color: #B91C1C;
+    border: 1px solid #F87171;
+}
+
+.message.success {
+    background-color: #D1FAE5;
+    color: #065F46;
+    border: 1px solid #6EE7B7;
+}
+
+.message.info {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+    border: 1px solid #93C5FD;
+}
+
+/* Стили для кнопки выхода */
+.logout-button {
+    transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+    background-color: #DC2626;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 640px) {
+    .grid {
+        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    }
+}

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Gang - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/index.css">
+</head>
+
+<body class="bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="text-xl font-bold text-indigo-600">English Gang</div>
+                </div>
+                <div class="flex items-center space-x-4" id="navButtons">
+                    <!-- Кнопки будут добавлены через JavaScript -->
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Welcome Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Welcome to English Gang</h1>
+            <p class="text-gray-600" id="welcomeMessage">
+                Discover our platform for learning English with professional teachers.
+                <span id="loginPrompt" class="text-indigo-600">
+                    <a href="/login.html">Login</a> or <a href="/registration.html">register</a> to get started!
+                </span>
+            </p>
+        </div>
+
+        <!-- Our Teachers Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Our Teachers</h2>
+            <div id="teachersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="text-center">Loading teachers...</div>
+            </div>
+        </div>
+
+        <!-- Student Dashboard Section (visible only for logged in users) -->
+        <div id="studentDashboard" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Your Dashboard</h2>
+            <div id="studentData" class="space-y-4">
+                <!-- Student specific data will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Teacher Dashboard Section (visible only for logged in teachers) -->
+        <div id="teacherDashboard" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Teacher Dashboard</h2>
+            <div id="teacherData" class="space-y-4">
+                <!-- Teacher specific data will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Manager Dashboard Section (visible only for managers) -->
+        <div id="managerDashboard" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Admin Dashboard</h2>
+            <div id="managerData" class="space-y-4">
+                <!-- Manager specific data will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Загружаем список учителей (публичные данные)
+            await loadTeachers();
+            
+            // Проверяем, авторизован ли пользователь
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    // Загружаем данные профиля пользователя
+                    const userData = await fetchUserData(token);
+                    
+                    // Обновляем UI в зависимости от статуса авторизации
+                    updateUIforLoggedInUser(userData);
+                    
+                    // Загружаем специфичные данные в зависимости от роли
+                    await loadRoleSpecificData(userData.role, token);
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                    // Если токен невалидный - сбрасываем его
+                    if (error.status === 401) {
+                        localStorage.removeItem('token');
+                    }
+                }
+            } else {
+                // Отображаем UI для неавторизованного пользователя
+                updateUIforGuest();
+            }
+        });
+        
+        // Загрузка публичного списка учителей
+        async function loadTeachers() {
+            try {
+                const response = await fetch('/api/teachers/public');
+                const teachers = await response.json();
+                
+                displayTeachers(teachers);
+            } catch (error) {
+                console.error('Error loading teachers:', error);
+                document.getElementById('teachersList').innerHTML = 
+                    '<div class="text-red-500">Failed to load teachers list. Please try again later.</div>';
+            }
+        }
+        
+        // Отображение списка учителей
+        function displayTeachers(teachers) {
+            const teachersList = document.getElementById('teachersList');
+            
+            if (teachers.length === 0) {
+                teachersList.innerHTML = '<div class="text-center">No teachers available at the moment.</div>';
+                return;
+            }
+            
+            teachersList.innerHTML = teachers.map(teacher => `
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <div class="font-semibold text-lg text-gray-800">${teacher.first_name} ${teacher.last_name}</div>
+                    <div class="text-gray-600 mb-2">Qualification: ${teacher.qualification || 'Not specified'}</div>
+                    <div class="text-sm text-gray-500">
+                        ${teacher.email}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Обновление UI для гостя (не авторизованного пользователя)
+        function updateUIforGuest() {
+            document.getElementById('navButtons').innerHTML = `
+                <a href="/login.html" class="text-indigo-600 hover:text-indigo-800 font-medium">Login</a>
+                <a href="/registration.html" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm">Register</a>
+            `;
+            
+            document.getElementById('loginPrompt').classList.remove('hidden');
+            document.getElementById('studentDashboard').classList.add('hidden');
+            document.getElementById('teacherDashboard').classList.add('hidden');
+            document.getElementById('managerDashboard').classList.add('hidden');
+        }
+        
+        // Обновление UI для авторизованного пользователя
+        function updateUIforLoggedInUser(userData) {
+            document.getElementById('navButtons').innerHTML = `
+                <span class="text-gray-700 mr-4">${userData.email}</span>
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm">Logout</button>
+            `;
+            
+            document.getElementById('loginPrompt').classList.add('hidden');
+            document.getElementById('welcomeMessage').textContent = 
+                `Welcome back, ${userData.additional_info.first_name || userData.email}! You are logged in as ${userData.role}.`;
+            
+            // Показываем соответствующий дашборд
+            if (userData.role === 'student') {
+                document.getElementById('studentDashboard').classList.remove('hidden');
+            } else if (userData.role === 'teacher') {
+                document.getElementById('teacherDashboard').classList.remove('hidden');
+            } else if (userData.role === 'manager') {
+                document.getElementById('managerDashboard').classList.remove('hidden');
+            }
+        }
+        
+        // Загрузка данных о пользователе
+        async function fetchUserData(token) {
+            const response = await fetch('/api/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                const error = new Error('Failed to load user data');
+                error.status = response.status;
+                throw error;
+            }
+            
+            return await response.json();
+        }
+        
+        // Загрузка данных в зависимости от роли
+        async function loadRoleSpecificData(role, token) {
+            try {
+                if (role === 'student') {
+                    // Загружаем данные для студента
+                    const studentData = document.getElementById('studentData');
+                    studentData.innerHTML = '<div class="text-center">Loading your data...</div>';
+                    
+                    // Здесь можно загрузить дополнительные данные о студенте
+                    // Например, прогресс, занятия и т.д.
+                    
+                    studentData.innerHTML = `
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Your Progress</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <div class="text-sm text-gray-600">Current Level</div>
+                                    <div class="text-2xl font-bold text-indigo-600">B1</div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-600">Vocabulary Size</div>
+                                    <div class="text-2xl font-bold text-indigo-600">1200 words</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                } else if (role === 'teacher') {
+                    // Загружаем данные для учителя
+                    const teacherData = document.getElementById('teacherData');
+                    teacherData.innerHTML = '<div class="text-center">Loading your students...</div>';
+                    
+                    // Получаем список студентов учителя
+                    const response = await fetch('/api/students/', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to load students data');
+                    }
+                    
+                    const students = await response.json();
+                    
+                    if (students.length === 0) {
+                        teacherData.innerHTML = '<div class="text-center">You don\'t have any students yet.</div>';
+                    } else {
+                        teacherData.innerHTML = `
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Your Students</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                ${students.map(s => `
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <div class="font-semibold">${s.first_name} ${s.last_name}</div>
+                                        <div class="text-sm text-gray-600">Level: ${s.level}</div>
+                                        <div class="text-sm text-gray-600">Vocabulary: ${s.vocabulary} words</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+                    
+                } else if (role === 'manager') {
+                    // Загружаем данные для менеджера
+                    const managerData = document.getElementById('managerData');
+                    managerData.innerHTML = '<div class="text-center">Loading data...</div>';
+                    
+                    // Получаем списки учителей и студентов
+                    const [teachersRes, studentsRes] = await Promise.all([
+                        fetch('/api/teachers/', {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        }).then(res => res.json()),
+                        fetch('/api/students/', {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        }).then(res => res.json())
+                    ]);
+                    
+                    managerData.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Teachers Management</h3>
+                                <p class="mb-3">Total: ${teachersRes.length} teachers</p>
+                                <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm mb-4">
+                                    Add New Teacher
+                                </button>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Students Management</h3>
+                                <p class="mb-3">Total: ${studentsRes.length} students</p>
+                                <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm mb-4">
+                                    Add New Student
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error(`Error loading ${role} data:`, error);
+                const dataContainer = document.getElementById(`${role}Data`);
+                if (dataContainer) {
+                    dataContainer.innerHTML = `
+                        <div class="text-red-500">Error loading your data. Please try again later.</div>
+                    `;
+                }
+            }
+        }
+        
+        // Функция выхода из системы
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.reload(); // Перезагружаем страницу
+        }
+    </script>
+</body>
+
+</html>
