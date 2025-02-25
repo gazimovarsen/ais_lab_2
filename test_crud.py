@@ -61,9 +61,9 @@ def manager_token(client, db):
     db.add(manager)
     db.commit()
 
-    # Получаем токен
+    # Получаем токен - обратите внимание на обновленный URL с /api/ префиксом
     response = client.post(
-        "/token", data={"username": manager_email, "password": "admin123"}
+        "/api/token", data={"username": manager_email, "password": "admin123"}
     )
     return response.json()["access_token"]
 
@@ -75,7 +75,7 @@ def auth_headers(manager_token):
 
 def create_sample_teacher(client, auth_headers):
     return client.post(
-        "/teachers/",
+        "/api/teachers/",  # Обновленный URL с /api/ префиксом
         json={
             "first_name": "John",
             "last_name": "Doe",
@@ -95,7 +95,7 @@ def test_create_teacher(client, auth_headers):
 
 
 def test_read_teachers(client, auth_headers):
-    response = client.get("/teachers/", headers=auth_headers)
+    response = client.get("/api/teachers/", headers=auth_headers)  # Обновленный URL
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
@@ -103,7 +103,7 @@ def test_read_teachers(client, auth_headers):
 def test_update_teacher(client, auth_headers):
     teacher = create_sample_teacher(client, auth_headers).json()
     response = client.put(
-        f"/teachers/{teacher['id']}",
+        f"/api/teachers/{teacher['id']}",  # Обновленный URL
         json={
             "first_name": "Jane",
             "last_name": "Smith",
@@ -120,7 +120,9 @@ def test_update_teacher(client, auth_headers):
 
 def test_delete_teacher(client, auth_headers):
     teacher = create_sample_teacher(client, auth_headers).json()
-    response = client.delete(f"/teachers/{teacher['id']}", headers=auth_headers)
+    response = client.delete(
+        f"/api/teachers/{teacher['id']}", headers=auth_headers
+    )  # Обновленный URL
     assert response.status_code == 200
 
 
@@ -130,7 +132,7 @@ def create_sample_student(client, auth_headers):
 
     # First create a teacher
     teacher = client.post(
-        "/teachers/",
+        "/api/teachers/",  # Обновленный URL
         json={
             "first_name": "John",
             "last_name": "Doe",
@@ -143,7 +145,7 @@ def create_sample_student(client, auth_headers):
     ).json()
 
     return client.post(
-        "/students/",
+        "/api/students/",  # Обновленный URL
         json={
             "first_name": "Alex",
             "last_name": "Petrov",
@@ -166,7 +168,7 @@ def test_create_student(client, auth_headers):
 
 
 def test_read_students(client, auth_headers):
-    response = client.get("/students/", headers=auth_headers)
+    response = client.get("/api/students/", headers=auth_headers)  # Обновленный URL
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
@@ -174,7 +176,7 @@ def test_read_students(client, auth_headers):
 def test_update_student(client, auth_headers):
     student = create_sample_student(client, auth_headers).json()
     response = client.put(
-        f"/students/{student['id']}",
+        f"/api/students/{student['id']}",  # Обновленный URL
         json={
             "first_name": "Alex",
             "last_name": "Petrov",
@@ -197,8 +199,12 @@ def test_delete_student(client, auth_headers):
     assert create_response.status_code == 200
     student = create_response.json()
 
-    delete_response = client.delete(f"/students/{student['id']}", headers=auth_headers)
+    delete_response = client.delete(
+        f"/api/students/{student['id']}", headers=auth_headers
+    )  # Обновленный URL
     assert delete_response.status_code == 200
 
-    verify_response = client.get(f"/students/{student['id']}", headers=auth_headers)
+    verify_response = client.get(
+        f"/api/students/{student['id']}", headers=auth_headers
+    )  # Обновленный URL
     assert verify_response.status_code == 404

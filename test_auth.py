@@ -68,12 +68,12 @@ def test_protected_endpoint(client, db):
     manager_data = create_test_manager(db)
 
     # Пробуем получить доступ без токена
-    response = client.get("/users/me")
+    response = client.get("/api/me")  # Обновленный URL
     assert response.status_code == 401
 
     # Пробуем получить доступ с токеном
     headers = {"Authorization": f"Bearer {manager_data['access_token']}"}
-    response = client.get("/users/me", headers=headers)
+    response = client.get("/api/me", headers=headers)  # Обновленный URL
     assert response.status_code == 200
     data = response.json()
     assert data["role"] == "manager"
@@ -95,7 +95,7 @@ def test_role_based_access(client, db):
         "password": "teacher123",
     }
     teacher_response = client.post(
-        "/teachers/", json=teacher_data, headers=manager_headers
+        "/api/teachers/", json=teacher_data, headers=manager_headers  # Обновленный URL
     )
     assert teacher_response.status_code == 200
     teacher_id = teacher_response.json()["id"]
@@ -115,18 +115,24 @@ def test_role_based_access(client, db):
 
     # Создаем студента через API менеджера
     student_response = client.post(
-        "/students/", json=student_data, headers=manager_headers
+        "/api/students/", json=student_data, headers=manager_headers  # Обновленный URL
     )
     assert student_response.status_code == 200
 
     # Получаем токен для студента
     student_token_response = client.post(
-        "/token", data={"username": student_data["email"], "password": "student123"}
+        "/api/token",
+        data={
+            "username": student_data["email"],
+            "password": "student123",
+        },  # Обновленный URL
     )
     assert student_token_response.status_code == 200
     student_token = student_token_response.json()["access_token"]
     student_headers = {"Authorization": f"Bearer {student_token}"}
 
     # Проверяем что студент не может удалить учителя
-    delete_response = client.delete(f"/teachers/{teacher_id}", headers=student_headers)
+    delete_response = client.delete(
+        f"/api/teachers/{teacher_id}", headers=student_headers
+    )  # Обновленный URL
     assert delete_response.status_code == 403
